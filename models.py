@@ -114,14 +114,14 @@ class DummyNet(nn.Module):
 
 def load_network(network_name, pretrained):
     if network_name == 'resnet18':
-        # network
         network = torchvision.models.resnet18(pretrained=pretrained)
-        if torch.cuda.is_available():
-            network = network.cuda()
     elif network_name == 'dummynet':
         network = DummyNet()
     else:
         raise Exception("Invalid network name: {}".format(network_name))
+
+    if torch.cuda.is_available():
+        network = network.cuda()
 
     return network
 

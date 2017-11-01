@@ -145,8 +145,6 @@ def load_optimizer(
         network,
         optimizer_type,
         lr_init,
-        lr_decay,
-        lr_schedule,
         momentum,
         weight_decay,
         nesterov):
@@ -202,8 +200,6 @@ def initialize(
         network,
         optimizer_type,
         lr_init,
-        lr_decay,
-        lr_schedule,
         momentum,
         weight_decay,
         nesterov)

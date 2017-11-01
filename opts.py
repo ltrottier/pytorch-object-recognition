@@ -12,7 +12,7 @@ opts = {
         'drop_last': True,
     },
     'experiment': {
-        'folder': 'results/experiment1',
+        'folder': 'results/dummy',
     },
     'optim': {
         'type': 'sgd',

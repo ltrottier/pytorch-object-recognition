@@ -1,3 +1,5 @@
+import matplotlib as mpl
+mpl.use('Agg')
 import os
 import dataset
 import models

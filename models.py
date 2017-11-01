@@ -93,9 +93,9 @@ class CrossEntropyCriterion():
 
 # utils
 
-class SimpleNet(nn.Module):
+class DummyNet(nn.Module):
     def __init__(self):
-        super(SimpleNet, self).__init__()
+        super(DummyNet, self).__init__()
 
         self.layer = nn.Sequential(
             nn.Conv2d(3, 32, 3, 1, 1),
@@ -118,8 +118,8 @@ def load_network(network_name, pretrained):
         network = torchvision.models.resnet18(pretrained=pretrained)
         if torch.cuda.is_available():
             network = network.cuda()
-    elif network_name == 'simplenet':
-        network = SimpleNet()
+    elif network_name == 'dummynet':
+        network = DummyNet()
     else:
         raise Exception("Invalid network name: {}".format(network_name))
 

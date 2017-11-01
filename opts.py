@@ -25,7 +25,7 @@ opts = {
         'weight_decay': 1e-4,
     },
     'network': {
-        'name': 'simplenet',
+        'name': 'dummynet',
         'pretrained': False,
     },
     'criterion': {

@@ -276,13 +276,3 @@ def initialize(
 
     return network, optimizer, callbacks, criterions
 
-
-if __name__ == '__main__':
-    x = Variable(torch.rand(1, 3, 32, 32))
-    n1 = PetriNet(10, 32, 14, 10, 16)
-    y1 = n1(x)
-    num_param1 = np.sum([a.data.numel() for a in n1.parameters()])
-
-    n2 = ResNet(10, 32, 3, 10)
-    y2 = n2(x)
-    num_param2 = np.sum([a.data.numel() for a in n2.parameters()])

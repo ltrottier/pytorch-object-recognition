@@ -9,7 +9,6 @@ import torch.optim as optim
 
 # callbacks
 
-
 class Callbacks():
     def __init__(self, callbacks):
         self.callbacks = callbacks
@@ -91,32 +90,96 @@ class CrossEntropyCriterion():
         return self.loss, self.stats
 
 
-# utils
+# networks
 
-class DummyNet(nn.Module):
-    def __init__(self):
-        super(DummyNet, self).__init__()
+class BottleneckResmap(nn.Module):
 
-        self.layer = nn.Sequential(
-            nn.Conv2d(3, 32, 3, 1, 1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.AvgPool2d(32)
-        )
-        self.fc = nn.Linear(32, 2)
+    def __init__(self, ni, no, stride, padding):
+        super(BottleneckResmap, self).__init__()
+
+        self.bn1 = nn.BatchNorm2d(ni)
+        self.relu1 = nn.ReLU()
+        self.conv1 = nn.Conv2d(ni, no // 4, 1, 1)
+
+        self.bn2 = nn.BatchNorm2d(no // 4)
+        self.relu2 = nn.ReLU()
+        self.conv2 = nn.Conv2d(no // 4, no // 4, 3, stride, padding)
+
+        self.bn3 = nn.BatchNorm2d(no // 4)
+        self.relu3 = nn.ReLU()
+        self.conv3 = nn.Conv2d(no // 4, no, 1, 1)
 
     def forward(self, x):
-        y = self.layer(x)
-        y = y.view(y.size(0), -1)
-        y = self.fc(y)
-        return y
+        x = self.bn1(x)
+        x = self.relu1(x)
+        x = self.conv1(x)
+
+        x = self.bn2(x)
+        x = self.relu2(x)
+        x = self.conv2(x)
+
+        x = self.bn3(x)
+        x = self.relu3(x)
+        x = self.conv3(x)
+
+        return x
 
 
-def load_network(network_name, pretrained):
-    if network_name == 'resnet18':
-        network = torchvision.models.resnet18(pretrained=pretrained)
-    elif network_name == 'dummynet':
-        network = DummyNet()
+class BottleneckBlock(BottleneckResmap):
+
+    def __init__(self, nf, stride):
+        if stride == 1:
+            super(BottleneckBlock, self).__init__(nf, nf, 1, 1)
+            self.downsample = lambda x: x
+        elif stride == 2:
+            super(BottleneckBlock, self).__init__(nf, nf * 2, 2, 1)
+            self.downsample = nn.Sequential(
+                nn.BatchNorm2d(nf),
+                nn.ReLU(),
+                nn.Conv2d(nf, nf * 2, 1, 2)
+            )
+        else:
+            raise Exception("Invalid stride value: {}".format(stride))
+
+        self.resmap = super(BottleneckBlock, self).forward
+
+    def forward(self, x):
+        return self.resmap(x) + self.downsample(x)
+
+
+class ResNet(nn.Module):
+    def __init__(self, n_classes, nf_init, n_downsample, n_inter_block):
+        super(ResNet, self).__init__()
+
+        nf = nf_init
+        features = [nn.Conv2d(3, nf, 3, 1, 1)]
+        for i in range(n_downsample):
+            for j in range(n_inter_block):
+                features.append(BottleneckBlock(nf, 1))
+            features.append(BottleneckBlock(nf, 2))
+            nf = nf * 2
+
+        features.append(nn.BatchNorm2d(nf))
+        features.append(nn.ReLU())
+        
+        self.features = nn.Sequential(*features)
+
+        self.classifier = nn.Linear(nf, n_classes)
+
+    def forward(self, x):
+        x = self.features(x)
+        x = F.avg_pool2d(x, kernel_size=x.size()[2:])
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+
+        return x
+
+
+# utils
+
+def load_network(network_name, network_args):
+    if network_name == 'resnet':
+        network = ResNet(*network_args)
     else:
         raise Exception("Invalid network name: {}".format(network_name))
 
@@ -169,7 +232,7 @@ def load_optimizer(
 def initialize(
         experiment_folder,
         network_name,
-        pretrained,
+        network_args,
         criterion_name_train,
         criterion_name_test,
         optimizer_type,
@@ -181,7 +244,7 @@ def initialize(
         nesterov):
 
     # network
-    network = load_network(network_name, pretrained)
+    network = load_network(network_name, network_args)
 
     # save network architecture
     n_parameters = np.sum([p.numel() for p in network.parameters()])
@@ -212,3 +275,14 @@ def initialize(
     callbacks = callbacks_train, callbacks_test
 
     return network, optimizer, callbacks, criterions
+
+
+if __name__ == '__main__':
+    x = Variable(torch.rand(1, 3, 32, 32))
+    n1 = PetriNet(10, 32, 14, 10, 16)
+    y1 = n1(x)
+    num_param1 = np.sum([a.data.numel() for a in n1.parameters()])
+
+    n2 = ResNet(10, 32, 3, 10)
+    y2 = n2(x)
+    num_param2 = np.sum([a.data.numel() for a in n2.parameters()])

@@ -16,7 +16,24 @@ source activate pytorch
 
 ## Instructions
 
+The overall procedure to train a network is divided into two parts:
+1) Create an opts file.
+2) Train with that opts file.
+
+#### Create opts file
+
+Use `opts.py` to generate an opts file. The script can parse arguments so you can generate multiple opts file as you want (see script for the list of available arguments):
+
 ```bash
-python main.py
+python opts.py --option-type option-value
 ```
-By default, this will train a dummy CNN on a dummy dataset, and will output the results in `results/dummy`.
+
+The opts file is saved as `opts.txt` in folder designated by `experiment_folder`, which will be created if it does not exist. By default, `experiment_folder=results/exp1`.
+
+#### Train the network
+
+Use `main.py` with the previously generated opts file:
+```bash
+python main.py /path/to/opts.txt
+```
+

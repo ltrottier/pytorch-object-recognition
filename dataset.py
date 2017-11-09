@@ -127,12 +127,15 @@ class SquareCrop(object):
 class RandomHFlip(object):
     """ Randomly flip the image and its attributes horizontaly.
     """
+    
+    def __init__(self, flip_prob):
+        self.flip_prob = flip_prob
 
     def __call__(self, sample):
         img = sample['img']
         h, w = img.shape[:2]
 
-        if np.random.rand() > 0.5:
+        if np.random.rand() > self.flip_prob:
             # image
             sample['img'] = img[:, ::-1, :]
 
@@ -244,42 +247,46 @@ class SampleAsInputTargetMeta(object):
 
 # datasets
 
-# dummy
-def load_dummy_dataset(
+# cifar10
+def load_cifar10_dataset(
         dataset_dir,
-        train_test_ratio,
         batch_size,
         shuffle,
         num_workers,
         drop_last):
 
-    def load_data_list(dataset_dir):
-        filepath = os.path.join(dataset_dir, 'data_list.npz')
-        data_list = np.load(filepath)['data_list']
+    def load_raw_dataset(dataset_dir):
+        try:
+            container_train = torchvision.datasets.CIFAR10(dataset_dir)
+        except:
+            container_train = torchvision.datasets.CIFAR10(dataset_dir, download=True)
+        X_train = container_train.train_data
+        y_train = container_train.train_labels
 
-        # replace filepath
-        for entry in data_list:
-            entry['filepath'] = os.path.join(dataset_dir, entry['filepath'])
+        try:
+            container_test = torchvision.datasets.CIFAR10(dataset_dir, train=False)
+        except:
+            container_test = torchvision.datasets.CIFAR10(dataset_dir, train=False, download=True)
+        X_test = container_test.test_data
+        y_test = container_test.test_labels
 
-        return data_list
+        return X_train, y_train, X_test, y_test
 
-    class DummyDataset(Dataset):
-        def __init__(self, data_list, processing):
-            self.data_list = data_list
+    class Cifar10Dataset(Dataset):
+        def __init__(self, X, y, processing):
+            self.X = X
+            self.y = y
             self.processing = processing
 
         def __len__(self):
-            return len(self.data_list)
+            return self.X.shape[0]
 
         def __getitem__(self, idx):
-            entry = self.data_list[idx]
-
             # image
-            img = np.array(Image.open(entry['filepath']).convert('RGB'))
-            img = img.astype(np.float32) / 255
+            img = self.X[idx].astype(np.float32) / 255
 
             # label
-            label = np.array([entry['label']]).astype(int)
+            label = np.array(self.y[idx:idx+1])
 
             # idx
             index = np.array([idx])
@@ -295,8 +302,8 @@ def load_dummy_dataset(
 
             return sample
 
-    def create_dataset_and_dataloader(data_list, processing):
-        dataset = DummyDataset(data_list, processing)
+    def create_dataset_and_dataloader(X, y, processing):
+        dataset = Cifar10Dataset(X, y, processing)
         dataloader = DataLoader(dataset,
                                 batch_size=batch_size,
                                 shuffle=shuffle,
@@ -306,40 +313,230 @@ def load_dummy_dataset(
         return dataset, dataloader
 
     # raw
-    data_list = load_data_list(dataset_dir)
-    cutoff = int(len(data_list) * train_test_ratio)
+    X_train, y_train, X_test, y_test = load_raw_dataset(dataset_dir)
 
     # train
     processing_train = torchvision.transforms.Compose([
         DeepCopy(),
-        Rescale((32, 32)),
-        RandomTranslation(4),
-        ColorJitter(0.4, 0.4, 0.4),
         Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]),
+            mean=[0.4914,  0.4822,  0.4465],
+            std=[0.2470,  0.2435,  0.2616]),
+        RandomHFlip(0.5),
+        RandomTranslation(4),
         TransposeImage(),
         ToTensor(),
         SampleAsInputTargetMeta(),
     ])
-    data_list_train = data_list[:cutoff]
     dataset_train, dataloader_train = create_dataset_and_dataloader(
-        data_list_train, processing_train)
+        X_train, y_train, processing_train)
 
     # test
     processing_test = torchvision.transforms.Compose([
         DeepCopy(),
-        Rescale((32, 32)),
         Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]),
+            mean=[0.4914,  0.4822,  0.4465],
+            std=[0.2470,  0.2435,  0.2616]),
         TransposeImage(),
         ToTensor(),
         SampleAsInputTargetMeta(),
     ])
-    data_list_test = data_list[cutoff:]
     dataset_test, dataloader_test = create_dataset_and_dataloader(
-        data_list_test, processing_test)
+        X_test, y_test, processing_test)
+
+    return (dataset_train, dataset_test), (dataloader_train, dataloader_test)
+
+
+# cifar100
+def load_cifar100_dataset(
+        dataset_dir,
+        batch_size,
+        shuffle,
+        num_workers,
+        drop_last):
+
+    def load_raw_dataset(dataset_dir):
+        try:
+            container_train = torchvision.datasets.CIFAR100(dataset_dir)
+        except:
+            container_train = torchvision.datasets.CIFAR100(dataset_dir, download=True)
+        X_train = container_train.train_data
+        y_train = container_train.train_labels
+
+        try:
+            container_test = torchvision.datasets.CIFAR100(dataset_dir, train=False)
+        except:
+            container_test = torchvision.datasets.CIFAR100(dataset_dir, train=False, download=True)
+        X_test = container_test.test_data
+        y_test = container_test.test_labels
+
+        return X_train, y_train, X_test, y_test
+
+    class Cifar100Dataset(Dataset):
+        def __init__(self, X, y, processing):
+            self.X = X
+            self.y = y
+            self.processing = processing
+
+        def __len__(self):
+            return self.X.shape[0]
+
+        def __getitem__(self, idx):
+            # image
+            img = self.X[idx].astype(np.float32) / 255
+
+            # label
+            label = np.array(self.y[idx:idx+1])
+
+            # idx
+            index = np.array([idx])
+
+            sample = {
+                'index': index,
+                'img': img,
+                'label': label
+            }
+
+            if self.processing is not None:
+                sample = self.processing(sample)
+
+            return sample
+
+    def create_dataset_and_dataloader(X, y, processing):
+        dataset = Cifar100Dataset(X, y, processing)
+        dataloader = DataLoader(dataset,
+                                batch_size=batch_size,
+                                shuffle=shuffle,
+                                num_workers=num_workers,
+                                drop_last=drop_last)
+
+        return dataset, dataloader
+
+    # raw
+    X_train, y_train, X_test, y_test = load_raw_dataset(dataset_dir)
+
+    # train
+    processing_train = torchvision.transforms.Compose([
+        DeepCopy(),
+        Normalize(
+            mean=[0.5071,  0.4865,  0.4409],
+            std=[0.2673,  0.2564,  0.2762]),
+        RandomHFlip(0.5),
+        RandomTranslation(4),
+        TransposeImage(),
+        ToTensor(),
+        SampleAsInputTargetMeta(),
+    ])
+    dataset_train, dataloader_train = create_dataset_and_dataloader(
+        X_train, y_train, processing_train)
+
+    # test
+    processing_test = torchvision.transforms.Compose([
+        DeepCopy(),
+        Normalize(
+            mean=[0.5071,  0.4865,  0.4409],
+            std=[0.2673,  0.2564,  0.2762]),
+        TransposeImage(),
+        ToTensor(),
+        SampleAsInputTargetMeta(),
+    ])
+    dataset_test, dataloader_test = create_dataset_and_dataloader(
+        X_test, y_test, processing_test)
+
+    return (dataset_train, dataset_test), (dataloader_train, dataloader_test)
+
+
+# svhn
+def load_svhn_dataset(
+        dataset_dir,
+        batch_size,
+        shuffle,
+        num_workers,
+        drop_last):
+
+    def load_raw_dataset(dataset_dir):
+        try:
+            container_train = torchvision.datasets.SVHN(dataset_dir)
+        except:
+            container_train = torchvision.datasets.SVHN(dataset_dir, download=True)
+        X_train = container_train.data
+        y_train = (container_train.labels - 1).ravel().tolist()
+
+        try:
+            container_extra = torchvision.datasets.SVHN(dataset_dir, split='extra')
+        except:
+            container_extra = torchvision.datasets.SVHN(dataset_dir, split='extra', download=True)
+        X_extra = container_extra.data
+        X_train = np.concatenate([X_train, X_extra], 0)
+        y_extra = (container_extra.labels - 1).ravel().tolist()
+        y_train = y_train + y_extra
+
+        try:
+            container_test = torchvision.datasets.SVHN(dataset_dir, split='test')
+        except:
+            container_test = torchvision.datasets.SVHN(dataset_dir, split='test', download=True)
+        X_test = container_test.data
+        y_test = (container_test.labels - 1).ravel().tolist()
+
+        return X_train, y_train, X_test, y_test
+
+    class SVHNDataset(Dataset):
+        def __init__(self, X, y, processing):
+            self.X = X
+            self.y = y
+            self.processing = processing
+
+        def __len__(self):
+            return self.X.shape[0]
+
+        def __getitem__(self, idx):
+            # image
+            img = self.X[idx].astype(np.float32) / 255
+
+            # label
+            label = np.array(self.y[idx:idx+1])
+
+            # idx
+            index = np.array([idx])
+
+            sample = {
+                'index': index,
+                'img': img,
+                'label': label
+            }
+
+            if self.processing is not None:
+                sample = self.processing(sample)
+
+            return sample
+
+    def create_dataset_and_dataloader(X, y, processing):
+        dataset = SVHNDataset(X, y, processing)
+        dataloader = DataLoader(dataset,
+                                batch_size=batch_size,
+                                shuffle=shuffle,
+                                num_workers=num_workers,
+                                drop_last=drop_last)
+
+        return dataset, dataloader
+
+    # raw
+    X_train, y_train, X_test, y_test = load_raw_dataset(dataset_dir)
+
+    # train
+    processing_train = torchvision.transforms.Compose([
+        ToTensor(),
+        SampleAsInputTargetMeta(),
+    ])
+    dataset_train, dataloader_train = create_dataset_and_dataloader(
+        X_train, y_train, processing_train)
+
+    # test
+    processing_test = torchvision.transforms.Compose([
+        ToTensor(),
+        SampleAsInputTargetMeta(),
+    ])
+    dataset_test, dataloader_test = create_dataset_and_dataloader(
+        X_test, y_test, processing_test)
 
     return (dataset_train, dataset_test), (dataloader_train, dataloader_test)
 
@@ -355,9 +552,15 @@ def initialize(
         num_workers,
         drop_last):
 
-    if dataset_name == 'dummy':
-        dataset_train_test, dataloader_train_test = load_dummy_dataset(
-            dataset_dir, train_test_ratio, batch_size, shuffle, num_workers, drop_last)
+    if dataset_name == 'cifar10':
+        dataset_train_test, dataloader_train_test = load_cifar10_dataset(
+            dataset_dir, batch_size, shuffle, num_workers, drop_last)
+    elif dataset_name == 'cifar100':
+        dataset_train_test, dataloader_train_test = load_cifar100_dataset(
+            dataset_dir, batch_size, shuffle, num_workers, drop_last)
+    elif dataset_name == 'svhn':
+        dataset_train_test, dataloader_train_test = load_svhn_dataset(
+            dataset_dir, batch_size, shuffle, num_workers, drop_last)
     else:
         raise Exception("Invalid dataset type: {}".format(dataset_type))
 

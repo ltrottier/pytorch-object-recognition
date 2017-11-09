@@ -22,8 +22,9 @@ The overall procedure to train a network is divided into two parts:
 
 #### Create opts file
 
-Use `opts.py` to generate an opts file. The script can parse arguments so you can generate multiple opts file as you want (see script for the list of available arguments):
+Use `opts.py` to generate an opts file. By default, this will create an opts file for training a simple residual network on the CIFAR10 dataset (which will be automatically downloaded).
 
+The script can parse arguments so you can generate multiple opts file as you want (see script for the list of available arguments):
 ```bash
 python opts.py --option-type option-value
 ```
@@ -32,8 +33,9 @@ The opts file is saved as `opts.txt` in folder designated by `experiment_folder`
 
 #### Train the network
 
-Use `main.py` with the previously generated opts file:
+Use `main.py` with the previously generated opts file. For instance:
 ```bash
-python main.py /path/to/opts.txt
+python main.py results/exp1/opts.txt
 ```
+will start training a residual network in CIFAR10.
 

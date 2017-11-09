@@ -51,25 +51,28 @@ class ValueLogger():
     def __init__(self):
         self.cur_epoch = 0
         self.n = 0
-        self.ex = 0
+        self.v = 0
+        self.ev = 0
 
-    def __call__(self, cur_value, epoch):
+    def __call__(self, cur_value, n, epoch):
         if self.cur_epoch != epoch:
             self.n = 0
-            self.ex = 0
+            self.v = 0
+            self.ev = 0
             self.cur_epoch = epoch
-        self.ex = (self.ex * self.n + cur_value) / (self.n + 1)
-        self.n = self.n + 1
-        return self.ex
+        self.n = self.n + n
+        self.v = self.v + cur_value
+        self.ev = self.v / self.n
+        return self.ev
 
 
-def topk_err_mean(pred, targ, k):
-    bs = pred.size()[0]
+def topk_err_sum(pred, targ, k):
+    bs = pred.size(0)
     pred_classes = pred.topk(k, 1)[1]
     targ_expanded = targ.view(-1, 1).expand(bs, k)
     pred_err = (pred_classes == targ_expanded).sum(1) == 0
-    topk_err_mean = pred_err.sum() / bs
-    return topk_err_mean
+    topk_err_sum = pred_err.sum()
+    return topk_err_sum
 
 
 class CrossEntropyCriterion():
@@ -81,11 +84,12 @@ class CrossEntropyCriterion():
     def __call__(self, prediction, target, epoch):
         target = target.view(-1)
         self.loss = self.criterion(prediction, target.view(-1))
-        top1_err_mean = topk_err_mean(prediction.data, target.data, 1)
+        top1_err_sum = topk_err_sum(prediction.data, target.data, 1)
+        bs = prediction.size(0)
 
         self.stats = {
-            'Cross Entropy Loss': self.loss_logger(self.loss.data[0], epoch),
-            'Top 1 Error': self.top1_logger(top1_err_mean, epoch),
+            'Cross Entropy Loss': self.loss_logger(self.loss.data[0] * bs, bs, epoch),
+            'Top 1 Error': self.top1_logger(top1_err_sum, bs, epoch),
         }
         return self.loss, self.stats
 

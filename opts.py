@@ -20,6 +20,9 @@ parser.add_argument('--dataloader-num-workers', type=int, default=4)
 parser.add_argument('--dataloader-drop-last', dest='dataloader_drop_last', action='store_true')
 parser.add_argument('--no-dataloader-drop-last', dest='dataloader_drop_last', action='store_false')
 parser.set_defaults(dataloader_drop_last=True)
+parser.add_argument('--dataloader-augment', dest='dataloader_augment', action='store_true')
+parser.add_argument('--no-dataloader-augment', dest='dataloader_augment', action='store_false')
+parser.set_defaults(dataloader_augment=True)
 
 # experiment
 parser.add_argument('--experiment-folder', default='results/exp1')

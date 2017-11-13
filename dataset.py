@@ -253,7 +253,8 @@ def load_cifar10_dataset(
         batch_size,
         shuffle,
         num_workers,
-        drop_last):
+        drop_last,
+        augment):
 
     def load_raw_dataset(dataset_dir):
         try:
@@ -316,17 +317,20 @@ def load_cifar10_dataset(
     X_train, y_train, X_test, y_test = load_raw_dataset(dataset_dir)
 
     # train
-    processing_train = torchvision.transforms.Compose([
+    transforms_train = [
         DeepCopy(),
         Normalize(
             mean=[0.4914,  0.4822,  0.4465],
-            std=[0.2470,  0.2435,  0.2616]),
+            std=[0.2470,  0.2435,  0.2616])]
+    if augment:
+        transforms_train = transforms_train + [
         RandomHFlip(0.5),
-        RandomTranslation(4),
+        RandomTranslation(4)]
+    transforms_train = transforms_train + [
         TransposeImage(),
         ToTensor(),
-        SampleAsInputTargetMeta(),
-    ])
+        SampleAsInputTargetMeta()]
+    processing_train = torchvision.transforms.Compose(transforms_train)
     dataset_train, dataloader_train = create_dataset_and_dataloader(
         X_train, y_train, processing_train)
 
@@ -352,7 +356,8 @@ def load_cifar100_dataset(
         batch_size,
         shuffle,
         num_workers,
-        drop_last):
+        drop_last,
+        augment):
 
     def load_raw_dataset(dataset_dir):
         try:
@@ -415,17 +420,20 @@ def load_cifar100_dataset(
     X_train, y_train, X_test, y_test = load_raw_dataset(dataset_dir)
 
     # train
-    processing_train = torchvision.transforms.Compose([
+    transforms_train = [
         DeepCopy(),
         Normalize(
             mean=[0.5071,  0.4865,  0.4409],
-            std=[0.2673,  0.2564,  0.2762]),
+            std=[0.2673,  0.2564,  0.2762])]
+    if augment:
+        transforms_train = transforms_train + [
         RandomHFlip(0.5),
-        RandomTranslation(4),
+        RandomTranslation(4)]
+    transforms_train = transforms_train + [
         TransposeImage(),
         ToTensor(),
-        SampleAsInputTargetMeta(),
-    ])
+        SampleAsInputTargetMeta()]
+    processing_train = torchvision.transforms.Compose(transforms_train)
     dataset_train, dataloader_train = create_dataset_and_dataloader(
         X_train, y_train, processing_train)
 
@@ -451,7 +459,8 @@ def load_svhn_dataset(
         batch_size,
         shuffle,
         num_workers,
-        drop_last):
+        drop_last,
+        augment):
 
     def load_raw_dataset(dataset_dir):
         try:
@@ -550,17 +559,18 @@ def initialize(
         batch_size,
         shuffle,
         num_workers,
-        drop_last):
+        drop_last,
+        augment):
 
     if dataset_name == 'cifar10':
         dataset_train_test, dataloader_train_test = load_cifar10_dataset(
-            dataset_dir, batch_size, shuffle, num_workers, drop_last)
+            dataset_dir, batch_size, shuffle, num_workers, drop_last, augment)
     elif dataset_name == 'cifar100':
         dataset_train_test, dataloader_train_test = load_cifar100_dataset(
-            dataset_dir, batch_size, shuffle, num_workers, drop_last)
+            dataset_dir, batch_size, shuffle, num_workers, drop_last, augment)
     elif dataset_name == 'svhn':
         dataset_train_test, dataloader_train_test = load_svhn_dataset(
-            dataset_dir, batch_size, shuffle, num_workers, drop_last)
+            dataset_dir, batch_size, shuffle, num_workers, drop_last, augment)
     else:
         raise Exception("Invalid dataset type: {}".format(dataset_type))
 

@@ -23,6 +23,7 @@ batch_size = opts['dataloader_batch_size']
 shuffle = opts['dataloader_shuffle']
 num_workers = opts['dataloader_num_workers']
 drop_last = opts['dataloader_drop_last']
+augment = opts['dataloader_augment']
 
 dataset_init = dataset.initialize(
     dataset_name,
@@ -31,7 +32,8 @@ dataset_init = dataset.initialize(
     batch_size,
     shuffle,
     num_workers,
-    drop_last)
+    drop_last,
+    augment)
 dataset_train, dataset_test = dataset_init[0]
 dataloader_train, dataloader_test = dataset_init[1]
 

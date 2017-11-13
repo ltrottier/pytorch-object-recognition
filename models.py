@@ -5,6 +5,7 @@ import torchvision
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.nn.init as init
 import torch.optim as optim
 
 # callbacks
@@ -190,13 +191,16 @@ def load_network(network_name, network_args):
 
     # initialize parameters
     for m in network.modules():
-        if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        if isinstance(m, nn.Conv2d):
             init.kaiming_normal(m.weight.data)
             if m.bias is not None:
                 init.constant(m.bias.data, 0)
-        elif isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d):
+        elif isinstance(m, nn.BatchNorm2d):
             init.constant(m.weight.data, 1)
             init.constant(m.bias.data, 0)
+        elif isinstance(m, nn.Linear):
+            if m.bias is not None:
+                init.constant(m.bias.data, 0)
 
     # use GPU is available
     if torch.cuda.is_available():

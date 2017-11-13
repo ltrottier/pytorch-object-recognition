@@ -182,11 +182,23 @@ class ResNet(nn.Module):
 # utils
 
 def load_network(network_name, network_args):
+    # instantiate
     if network_name == 'resnet':
         network = ResNet(*network_args)
     else:
         raise Exception("Invalid network name: {}".format(network_name))
 
+    # initialize parameters
+    for m in network.modules():
+        if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+            init.kaiming_normal(m.weight.data)
+            if m.bias is not None:
+                init.constant(m.bias.data, 0)
+        elif isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d):
+            init.constant(m.weight.data, 1)
+            init.constant(m.bias.data, 0)
+
+    # use GPU is available
     if torch.cuda.is_available():
         network = network.cuda()
 

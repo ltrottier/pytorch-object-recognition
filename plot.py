@@ -67,11 +67,17 @@ def plot_results(filename):
             # Write report
             values_min = np.min(values)
             values_last = values[-1]
-            values_mean_last_five = np.mean(values[-5:])
+            if n_epochs > 5:
+                values_mean_last_five = np.mean(values[-5:])
+            else:
+                values_mean_last_five = None
 
             values_smooth_min = np.min(values_smooth)
             values_smooth_last = values_smooth[-1]
-            values_smooth_mean_last_five = np.mean(values_smooth[-5:])
+            if n_epochs > 5:
+                values_smooth_mean_last_five = np.mean(values_smooth[-5:])
+            else:
+                values_smooth_mean_last_five = None
 
             savefile = os.path.join(dirname, "{} - {}.report.txt".format(stats_type, key))
             with open(savefile, 'w') as fid:

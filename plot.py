@@ -40,14 +40,16 @@ def plot_results(filename):
 
         for key in results[0][stats_type].keys():
 
-            values = [results[epoch][stats_type][key]
-                      for epoch in range(n_epochs)]
-            values = tfsmooth(np.array(values), smoothing_weight)
+            # Get values
+            values = [results[epoch][stats_type][key] for epoch in range(n_epochs)]
+            values = np.array(values)
 
+            # Plot smoothed values
+            values_smooth = tfsmooth(values, smoothing_weight)
             fig, ax = plt.subplots()
             plots = []
             plots = plots + ax.plot(
-                values,
+                values_smooth,
                 linestyle='solid',
                 label='Smoothing {:0.1f}'.format(smoothing_weight)
             )
@@ -58,10 +60,34 @@ def plot_results(filename):
             fig.set_size_inches(8, 8)
             fig.tight_layout()
 
-            savefile = os.path.join(
-                dirname, "{} - {}.jpg".format(stats_type, key))
+            savefile = os.path.join(dirname, "{} - {}.jpg".format(stats_type, key))
             fig.savefig(savefile, tight_boxes=True)
             plt.close(fig)
+
+            # Write report
+            values_min = np.min(values)
+            values_last = values[-1]
+            values_mean_last_five = np.mean(values[-5:])
+
+            values_smooth_min = np.min(values_smooth)
+            values_smooth_last = values_smooth[-1]
+            values_smooth_mean_last_five = np.mean(values_smooth[-5:])
+
+            savefile = os.path.join(dirname, "{} - {}.report.txt".format(stats_type, key))
+            with open(savefile, 'w') as fid:
+                lines = []
+                lines.append("Original Values")
+                lines.append("     Min: {}".format(values_min))
+                lines.append("     Last: {}".format(values_last))
+                lines.append("     Mean Last 5 Epochs: {}".format(values_mean_last_five))
+                lines.append("")
+                lines.append("Smoothed Values")
+                lines.append("     Min: {}".format(values_smooth_min))
+                lines.append("     Last: {}".format(values_smooth_last))
+                lines.append("     Mean Last 5 Epochs: {}".format(values_smooth_mean_last_five))
+                lines.append("")
+                lines = "\n".join(lines)
+                fid.write(lines)
 
 
 if __name__ == '__main__':

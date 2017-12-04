@@ -42,11 +42,11 @@ class Timer():
 # utils
 
 
-def make_variable(input):
+def make_variable(input, volatile=False):
     if isinstance(input, list):
-        output = [Variable(t) for t in input]
+        output = [Variable(t, volatile=volatile) for t in input]
     else:
-        output = Variable(input)
+        output = Variable(input, volatile=volatile)
     return output
 
 
@@ -58,11 +58,11 @@ def make_gpu_tensor(input):
     return output
 
 
-def process_array(input):
+def process_array(input, volatile=False):
     output = input
     if torch.cuda.is_available():
         output = make_gpu_tensor(output)
-    output = make_variable(output)
+    output = make_variable(output, volatile)
     return output
 
 
@@ -94,8 +94,8 @@ def test_step(network, criterion, dataloader, epoch, callbacks):
     stats = None
     network.train(False)
     for i, (input, target, meta) in enumerate(dataloader):
-        input = process_array(input)
-        target = process_array(target)
+        input = process_array(input, volatile=True)
+        target = process_array(target, volatile=True)
         output = network(input)
         loss, stats = criterion(output, target, epoch)
         callbacks(input, output, target, meta, epoch)

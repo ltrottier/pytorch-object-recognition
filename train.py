@@ -77,6 +77,7 @@ def save_model(model, savepath):
 def train_step(network, criterion, optimizer, dataloader, epoch, callbacks):
     stats = None
     network.train(True)
+    np.random.seed()
     for i, (input, target, meta) in enumerate(dataloader):
         input = process_array(input)
         target = process_array(target)

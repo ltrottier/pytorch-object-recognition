@@ -135,7 +135,7 @@ class RandomHFlip(object):
         img = sample['img']
         h, w = img.shape[:2]
 
-        if np.random.rand() > self.flip_prob:
+        if np.random.rand() < self.flip_prob:
             # image
             sample['img'] = img[:, ::-1, :]
 

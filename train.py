@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -41,15 +40,6 @@ class Timer():
 
 # utils
 
-
-def make_variable(input, volatile=False):
-    if isinstance(input, list):
-        output = [Variable(t, volatile=volatile) for t in input]
-    else:
-        output = Variable(input, volatile=volatile)
-    return output
-
-
 def make_gpu_tensor(input):
     if isinstance(input, list):
         output = [t.cuda() for t in input]
@@ -58,11 +48,10 @@ def make_gpu_tensor(input):
     return output
 
 
-def process_array(input, volatile=False):
+def process_array(input):
     output = input
     if torch.cuda.is_available():
         output = make_gpu_tensor(output)
-    output = make_variable(output, volatile)
     return output
 
 
@@ -94,12 +83,13 @@ def train_step(network, criterion, optimizer, dataloader, epoch, callbacks):
 def test_step(network, criterion, dataloader, epoch, callbacks):
     stats = None
     network.train(False)
-    for i, (input, target, meta) in enumerate(dataloader):
-        input = process_array(input, volatile=True)
-        target = process_array(target, volatile=True)
-        output = network(input)
-        loss, stats = criterion(output, target, epoch)
-        callbacks(input, output, target, meta, epoch)
+    with torch.no_grad():
+        for i, (input, target, meta) in enumerate(dataloader):
+            input = process_array(input)
+            target = process_array(target)
+            output = network(input)
+            loss, stats = criterion(output, target, epoch)
+            callbacks(input, output, target, meta, epoch)
 
     return {'Test Stats': stats}
 

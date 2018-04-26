@@ -2,7 +2,6 @@ import os
 import numpy as np
 import torch
 import torchvision
-from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
@@ -72,7 +71,7 @@ def topk_err_sum(pred, targ, k):
     pred_classes = pred.topk(k, 1)[1]
     targ_expanded = targ.view(-1, 1).expand(bs, k)
     pred_err = (pred_classes == targ_expanded).sum(1) == 0
-    topk_err_sum = pred_err.sum()
+    topk_err_sum = pred_err.sum().item()
     return topk_err_sum
 
 
@@ -85,11 +84,11 @@ class CrossEntropyCriterion():
     def __call__(self, prediction, target, epoch):
         target = target.view(-1)
         self.loss = self.criterion(prediction, target.view(-1))
-        top1_err_sum = topk_err_sum(prediction.data, target.data, 1)
+        top1_err_sum = topk_err_sum(prediction.detach(), target.detach(), 1)
         bs = prediction.size(0)
 
         self.stats = {
-            'Cross Entropy Loss': self.loss_logger(self.loss.data[0] * bs, bs, epoch),
+            'Cross Entropy Loss': self.loss_logger(self.loss.item() * bs, bs, epoch),
             'Top 1 Error': self.top1_logger(top1_err_sum, bs, epoch),
         }
         return self.loss, self.stats
@@ -192,15 +191,15 @@ def load_network(network_name, network_args):
     # initialize parameters
     for m in network.modules():
         if isinstance(m, nn.Conv2d):
-            init.kaiming_normal(m.weight.data)
+            init.kaiming_normal_(m.weight.detach())
             if m.bias is not None:
-                init.constant(m.bias.data, 0)
+                init.constant_(m.bias.detach(), 0)
         elif isinstance(m, nn.BatchNorm2d):
-            init.constant(m.weight.data, 1)
-            init.constant(m.bias.data, 0)
+            init.constant_(m.weight.detach(), 1)
+            init.constant_(m.bias.detach(), 0)
         elif isinstance(m, nn.Linear):
             if m.bias is not None:
-                init.constant(m.bias.data, 0)
+                init.constant_(m.bias.detach(), 0)
 
     # use GPU is available
     if torch.cuda.is_available():

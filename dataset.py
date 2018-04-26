@@ -5,7 +5,6 @@ from skimage import io, transform
 
 from PIL import Image
 import torch
-from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 import torchvision
 

@@ -11,7 +11,7 @@ source activate pytorch
 ```
 
 #### Install packages
-1) [pytorch](http://pytorch.org/) (tested with version 0.2.0.post3)
+1) [pytorch](http://pytorch.org/) (tested with version 0.4.0)
 2) `pip install -r requirements.txt` 
 
 ## Instructions

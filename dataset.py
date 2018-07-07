@@ -302,7 +302,7 @@ def load_cifar10_dataset(
 
             return sample
 
-    def create_dataset_and_dataloader(X, y, processing):
+    def create_dataset_and_dataloader(X, y, processing, drop_last):
         dataset = Cifar10Dataset(X, y, processing)
         dataloader = DataLoader(dataset,
                                 batch_size=batch_size,
@@ -331,7 +331,7 @@ def load_cifar10_dataset(
         SampleAsInputTargetMeta()]
     processing_train = torchvision.transforms.Compose(transforms_train)
     dataset_train, dataloader_train = create_dataset_and_dataloader(
-        X_train, y_train, processing_train)
+        X_train, y_train, processing_train, drop_last)
 
     # test
     processing_test = torchvision.transforms.Compose([
@@ -344,7 +344,7 @@ def load_cifar10_dataset(
         SampleAsInputTargetMeta(),
     ])
     dataset_test, dataloader_test = create_dataset_and_dataloader(
-        X_test, y_test, processing_test)
+        X_test, y_test, processing_test, False)
 
     return (dataset_train, dataset_test), (dataloader_train, dataloader_test)
 
@@ -405,7 +405,7 @@ def load_cifar100_dataset(
 
             return sample
 
-    def create_dataset_and_dataloader(X, y, processing):
+    def create_dataset_and_dataloader(X, y, processing, drop_last):
         dataset = Cifar100Dataset(X, y, processing)
         dataloader = DataLoader(dataset,
                                 batch_size=batch_size,
@@ -434,7 +434,7 @@ def load_cifar100_dataset(
         SampleAsInputTargetMeta()]
     processing_train = torchvision.transforms.Compose(transforms_train)
     dataset_train, dataloader_train = create_dataset_and_dataloader(
-        X_train, y_train, processing_train)
+        X_train, y_train, processing_train, drop_last)
 
     # test
     processing_test = torchvision.transforms.Compose([
@@ -447,7 +447,7 @@ def load_cifar100_dataset(
         SampleAsInputTargetMeta(),
     ])
     dataset_test, dataloader_test = create_dataset_and_dataloader(
-        X_test, y_test, processing_test)
+        X_test, y_test, processing_test, False)
 
     return (dataset_train, dataset_test), (dataloader_train, dataloader_test)
 
@@ -517,7 +517,7 @@ def load_svhn_dataset(
 
             return sample
 
-    def create_dataset_and_dataloader(X, y, processing):
+    def create_dataset_and_dataloader(X, y, processing, drop_last):
         dataset = SVHNDataset(X, y, processing)
         dataloader = DataLoader(dataset,
                                 batch_size=batch_size,
@@ -536,7 +536,7 @@ def load_svhn_dataset(
         SampleAsInputTargetMeta(),
     ])
     dataset_train, dataloader_train = create_dataset_and_dataloader(
-        X_train, y_train, processing_train)
+        X_train, y_train, processing_train, drop_last)
 
     # test
     processing_test = torchvision.transforms.Compose([
@@ -544,7 +544,7 @@ def load_svhn_dataset(
         SampleAsInputTargetMeta(),
     ])
     dataset_test, dataloader_test = create_dataset_and_dataloader(
-        X_test, y_test, processing_test)
+        X_test, y_test, processing_test, False)
 
     return (dataset_train, dataset_test), (dataloader_train, dataloader_test)
 

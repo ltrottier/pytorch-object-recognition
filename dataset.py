@@ -303,12 +303,16 @@ def load_cifar10_dataset(
             return sample
 
     def create_dataset_and_dataloader(X, y, processing, drop_last):
+        def worker_init_fn(worker_id):
+            np.random.seed(np.random.get_state()[1][0] + worker_id)
+
         dataset = Cifar10Dataset(X, y, processing)
         dataloader = DataLoader(dataset,
                                 batch_size=batch_size,
                                 shuffle=shuffle,
                                 num_workers=num_workers,
-                                drop_last=drop_last)
+                                drop_last=drop_last,
+                                worker_init_fn=worker_init_fn)
 
         return dataset, dataloader
 
@@ -406,12 +410,16 @@ def load_cifar100_dataset(
             return sample
 
     def create_dataset_and_dataloader(X, y, processing, drop_last):
+        def worker_init_fn(worker_id):
+            np.random.seed(np.random.get_state()[1][0] + worker_id)
+
         dataset = Cifar100Dataset(X, y, processing)
         dataloader = DataLoader(dataset,
                                 batch_size=batch_size,
                                 shuffle=shuffle,
                                 num_workers=num_workers,
-                                drop_last=drop_last)
+                                drop_last=drop_last,
+                                worker_init_fn=worker_init_fn)
 
         return dataset, dataloader
 
@@ -518,12 +526,16 @@ def load_svhn_dataset(
             return sample
 
     def create_dataset_and_dataloader(X, y, processing, drop_last):
+        def worker_init_fn(worker_id):
+            np.random.seed(np.random.get_state()[1][0] + worker_id)
+
         dataset = SVHNDataset(X, y, processing)
         dataloader = DataLoader(dataset,
                                 batch_size=batch_size,
                                 shuffle=shuffle,
                                 num_workers=num_workers,
-                                drop_last=drop_last)
+                                drop_last=drop_last,
+                                worker_init_fn=worker_init_fn)
 
         return dataset, dataloader
 

@@ -181,25 +181,33 @@ class ResNet(nn.Module):
 
 # utils
 
-def load_network(network_name, network_args):
+def load_network(network_name, network_args, experiment_folder):
     # instantiate
     if network_name == 'resnet':
         network = ResNet(*network_args)
     else:
         raise Exception("Invalid network name: {}".format(network_name))
 
-    # initialize parameters
-    for m in network.modules():
-        if isinstance(m, nn.Conv2d):
-            init.kaiming_normal_(m.weight.detach())
-            if m.bias is not None:
+    parameters_filename = os.path.join(experiment_folder, 'parameters.pt')
+    if os.path.isfile(parameters_filename):
+        # load state dict if available
+        print('Initializing model parameters from {}'.format(parameters_filename))
+        parameters = torch.load(parameters_filename, map_location=lambda storage, loc: storage)
+        network.load_state_dict(parameters)
+
+    else:
+        # otherwise initialize parameters
+        for m in network.modules():
+            if isinstance(m, nn.Conv2d):
+                init.kaiming_normal_(m.weight.detach())
+                if m.bias is not None:
+                    init.constant_(m.bias.detach(), 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                init.constant_(m.weight.detach(), 1)
                 init.constant_(m.bias.detach(), 0)
-        elif isinstance(m, nn.BatchNorm2d):
-            init.constant_(m.weight.detach(), 1)
-            init.constant_(m.bias.detach(), 0)
-        elif isinstance(m, nn.Linear):
-            if m.bias is not None:
-                init.constant_(m.bias.detach(), 0)
+            elif isinstance(m, nn.Linear):
+                if m.bias is not None:
+                    init.constant_(m.bias.detach(), 0)
 
     # use GPU is available
     if torch.cuda.is_available():
@@ -263,7 +271,7 @@ def initialize(
         nesterov):
 
     # network
-    network = load_network(network_name, network_args)
+    network = load_network(network_name, network_args, experiment_folder)
 
     # save network architecture
     n_parameters = np.sum([p.numel() for p in network.parameters()])

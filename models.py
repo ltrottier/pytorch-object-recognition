@@ -238,16 +238,43 @@ def load_optimizer(
         momentum,
         weight_decay,
         nesterov):
+
+    # remove weight decay for certain parameters
+    group_decay = []
+    group_no_decay = []
+    for m in network.modules():
+        if isinstance(m, nn.Linear):
+            group_decay.append(m.weight)
+            if m.bias is not None:
+                group_no_decay.append(m.bias)
+        elif isinstance(m, nn.modules.conv._ConvNd):
+            group_decay.append(m.weight)
+            if m.bias is not None:
+                group_no_decay.append(m.bias)
+        elif isinstance(m, nn.modules.batchnorm._BatchNorm):
+            if m.weight is not None:
+                group_no_decay.append(m.weight)
+            if m.bias is not None:
+                group_no_decay.append(m.bias)
+
+    if len(list(network.parameters())) != len(group_decay) + len(group_no_decay):
+        raise Exception("Failed to remove weight decay for certain parameters.")
+
+    params = [
+        dict(params=group_decay),
+        dict(params=group_no_decay, weight_decay=0),
+    ]
+
     if optimizer_type == 'sgd':
         optimizer = optim.SGD(
-            network.parameters(),
+            params,
             lr=lr_init,
             momentum=momentum,
             weight_decay=weight_decay,
             nesterov=nesterov)
     elif optimizer_type == 'adam':
         optimizer = optim.Adam(
-            network.parameters(),
+            params,
             lr=lr_init,
             weight_decay=weight_decay)
     else:
